@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Namespace 
+metadata:
+   name: stg 
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-apache
+  namespace: stg
+spec:
+  strategy: # 策略
+    type: RollingUpdate # 滚动更新策略
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-apache
+  template:
+    metadata:
+      labels:
+        app: php-apache
+    spec:
+      containers:
+      - name: php-apache
+        image: k8s.gcr.io/hpa-example
+        resources: # 资源配额
+          limits:  # 限制资源（上限）
+            cpu: 500m  # CPU限制，单位是core数
+          requests: # 请求资源（下限）
+            cpu: 200m  # CPU限制，单位是core数
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-apache
+  namespace: stg
+spec:
+  selector:
+    app: php-apache
+  type: NodePort # service类型
+  ports:
+  - port: 80
+    nodePort: 30252 # 指定绑定的node的端口(默认的取值范围是：30000-32767), 如果不指定，会默认分配
+    targetPort: 80
